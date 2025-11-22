@@ -49,6 +49,12 @@ class VG_ViewProperty(PropertyGroup):
         default=0
     )
 
+    show_query_section: BoolProperty(
+        name="Show Query Section",
+        description="Show/hide the advanced query section",
+        default=False
+    )
+
 
 class VG_SceneProperties(PropertyGroup):
     """Scene-level properties for Virtual Groups."""

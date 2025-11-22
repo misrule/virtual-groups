@@ -76,48 +76,58 @@ class VG_PT_views_subpanel(Panel):
             view = scene.vg_views[scene.vg_active_view_index]
             
             box = layout.box()
-            
+
             # Name field
             box.prop(view, "name", text="Name")
-            
-            # Query field
-            box.prop(view, "query", text="Query")
-            
-            # Apply Query button
-            box.operator("virtual_groups.apply_query", text="Apply Query", icon='FILE_REFRESH')
 
-            # Membership controls (v1.2)
             box.separator()
-            row = box.row()
-            row.label(text="Membership:", icon='BOOKMARKS')
 
+            # Membership controls (v1.2) - no label, just buttons
             row = box.row(align=True)
             row.operator("virtual_groups.add_to_view", text="Add", icon='ADD')
             row.operator("virtual_groups.remove_from_view", text="Remove", icon='REMOVE')
             row.operator("virtual_groups.clear_view_membership", text="Clear All", icon='X')
 
-            # Matching objects count
             box.separator()
-            box.label(text=f"{view.cached_count} objects", icon='OBJECT_DATA')
-            
-            # Separator
-            box.separator()
-            
+
             # Action buttons
             col = box.column(align=True)
-            
+
             # Row 1: Show, Hide
             row = col.row(align=True)
             row.operator("virtual_groups.view_show", text="Show", icon='HIDE_OFF')
             row.operator("virtual_groups.view_hide", text="Hide", icon='HIDE_ON')
-            
+
             # Row 2: Toggle, Select
             row = col.row(align=True)
             row.operator("virtual_groups.view_toggle", text="Toggle", icon='ARROW_LEFTRIGHT')
             row.operator("virtual_groups.view_select", text="Select", icon='RESTRICT_SELECT_OFF')
-            
+
             # Row 3: Select Recursive (full width)
             col.operator("virtual_groups.view_select_recursive", text="Select Recursive", icon='OUTLINER')
+
+            box.separator()
+
+            # Collapsible Advanced Query section (at bottom, out of the way)
+            # Determine query preview text
+            if view.query.strip():
+                query_preview = "Advanced Query (…)"
+            else:
+                query_preview = "Advanced Query (none)"
+
+            # Triangle icon (down if expanded, right if collapsed)
+            icon = 'TRIA_DOWN' if view.show_query_section else 'TRIA_RIGHT'
+
+            # Collapsible header (left-aligned)
+            row = box.row()
+            row.alignment = 'LEFT'
+            row.prop(view, "show_query_section", text=query_preview, icon=icon, emboss=False)
+
+            # Show query details if expanded
+            if view.show_query_section:
+                query_box = box.box()
+                query_box.prop(view, "query", text="Query")
+                query_box.operator("virtual_groups.apply_query", text="Apply Query", icon='FILE_REFRESH')
 
 
 # ============================================================================
