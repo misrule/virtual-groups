@@ -295,7 +295,7 @@ class VG_UL_views(UIList):
             row = layout.row(align=True)
 
             # Visibility toggle (icon from cached state)
-            vis_icon = 'RESTRICT_VIEW_OFF' if view.icon_all_visible else 'HIDE_ON'
+            vis_icon = 'HIDE_OFF' if view.icon_all_visible else 'HIDE_ON'
             op_vis = row.operator(
                 "virtual_groups.toggle_view_visibility",
                 text="",
