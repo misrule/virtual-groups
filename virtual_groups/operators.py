@@ -515,245 +515,6 @@ class VG_OT_apply_query(Operator):
 
 
 # ============================================================================
-# View Operation Operators (Phase 5)
-# ============================================================================
-
-class VG_OT_view_show(Operator):
-    """Show all objects matching the View query"""
-    bl_idname = "virtual_groups.view_show"
-    bl_label = "Show"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        # Only enabled if there's a view selected
-        scene = context.scene
-        if len(scene.vg_views) == 0 or not (0 <= scene.vg_active_view_index < len(scene.vg_views)):
-            return False
-        return True
-
-    def execute(self, context):
-        scene = context.scene
-        view = scene.vg_views[scene.vg_active_view_index]
-
-        # Get matching objects (hybrid: query + membership)
-        matching_objects = utils.get_objects_in_view(view, scene)
-
-        if not matching_objects:
-            self.report({'WARNING'}, "View has no objects")
-            return {'CANCELLED'}
-
-        # Show them
-        for obj in matching_objects:
-            obj.hide_viewport = False
-
-        # Force UI redraw
-        for area in context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
-
-        self.report({'INFO'}, f"Showed {len(matching_objects)} object(s)")
-        return {'FINISHED'}
-
-
-class VG_OT_view_hide(Operator):
-    """Hide all objects matching the View query"""
-    bl_idname = "virtual_groups.view_hide"
-    bl_label = "Hide"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        # Only enabled if there's a view selected
-        scene = context.scene
-        if len(scene.vg_views) == 0 or not (0 <= scene.vg_active_view_index < len(scene.vg_views)):
-            return False
-        return True
-
-    def execute(self, context):
-        scene = context.scene
-        view = scene.vg_views[scene.vg_active_view_index]
-
-        # Get matching objects (hybrid: query + membership)
-        matching_objects = utils.get_objects_in_view(view, scene)
-
-        if not matching_objects:
-            self.report({'WARNING'}, "View has no objects")
-            return {'CANCELLED'}
-
-        # Hide them
-        for obj in matching_objects:
-            obj.hide_viewport = True
-
-        # Force UI redraw
-        for area in context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
-
-        self.report({'INFO'}, f"Hid {len(matching_objects)} object(s)")
-        return {'FINISHED'}
-
-
-class VG_OT_view_toggle(Operator):
-    """Toggle visibility of all objects matching the View query"""
-    bl_idname = "virtual_groups.view_toggle"
-    bl_label = "Toggle"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    view_index: IntProperty(
-        name="View Index",
-        description="Index of view to toggle (use -1 for active view)",
-        default=-1
-    )
-
-    @classmethod
-    def poll(cls, context):
-        # Only enabled if there's at least one view
-        scene = context.scene
-        return len(scene.vg_views) > 0
-
-    def execute(self, context):
-        scene = context.scene
-
-        # Use view_index if provided, otherwise use active index
-        if self.view_index >= 0:
-            index = self.view_index
-        else:
-            index = scene.vg_active_view_index
-
-        if index < 0 or index >= len(scene.vg_views):
-            self.report({'ERROR'}, "No View selected")
-            return {'CANCELLED'}
-
-        view = scene.vg_views[index]
-
-        # Get matching objects (hybrid: query + membership)
-        matching_objects = utils.get_objects_in_view(view, scene)
-
-        if not matching_objects:
-            self.report({'WARNING'}, "View has no objects")
-            return {'CANCELLED'}
-
-        # Toggle visibility
-        for obj in matching_objects:
-            obj.hide_viewport = not obj.hide_viewport
-
-        # Force UI redraw
-        for area in context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
-
-        self.report({'INFO'}, f"Toggled visibility for {len(matching_objects)} object(s)")
-        return {'FINISHED'}
-
-
-class VG_OT_view_select(Operator):
-    """Select all objects matching the View query"""
-    bl_idname = "virtual_groups.view_select"
-    bl_label = "Select"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    view_index: IntProperty(
-        name="View Index",
-        description="Index of view to select (use -1 for active view)",
-        default=-1
-    )
-
-    @classmethod
-    def poll(cls, context):
-        # Only enabled if there's at least one view
-        scene = context.scene
-        return len(scene.vg_views) > 0
-
-    def execute(self, context):
-        scene = context.scene
-
-        # Use view_index if provided, otherwise use active index
-        if self.view_index >= 0:
-            index = self.view_index
-        else:
-            index = scene.vg_active_view_index
-
-        if index < 0 or index >= len(scene.vg_views):
-            self.report({'ERROR'}, "No View selected")
-            return {'CANCELLED'}
-
-        view = scene.vg_views[index]
-
-        # Get matching objects (hybrid: query + membership)
-        matching_objects = utils.get_objects_in_view(view, scene)
-
-        if not matching_objects:
-            self.report({'WARNING'}, "View has no objects")
-            return {'CANCELLED'}
-
-        # Deselect all first
-        bpy.ops.object.select_all(action='DESELECT')
-
-        # Select matching objects
-        for obj in matching_objects:
-            obj.select_set(True)
-
-        # Force UI redraw
-        for area in context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
-
-        self.report({'INFO'}, f"Selected {len(matching_objects)} object(s)")
-        return {'FINISHED'}
-
-
-class VG_OT_view_select_recursive(Operator):
-    """Select all objects matching the View query and their children"""
-    bl_idname = "virtual_groups.view_select_recursive"
-    bl_label = "Select (Recursive)"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        # Only enabled if there's a view selected
-        scene = context.scene
-        if len(scene.vg_views) == 0 or not (0 <= scene.vg_active_view_index < len(scene.vg_views)):
-            return False
-        return True
-
-    def execute(self, context):
-        scene = context.scene
-        view = scene.vg_views[scene.vg_active_view_index]
-
-        # Get matching objects (hybrid: query + membership)
-        matching_objects = utils.get_objects_in_view(view, scene)
-
-        if not matching_objects:
-            self.report({'WARNING'}, "View has no objects")
-            return {'CANCELLED'}
-
-        # Deselect all first
-        bpy.ops.object.select_all(action='DESELECT')
-
-        # Select matching objects and their children recursively
-        def select_with_children(obj):
-            """Recursively select object and all children."""
-            obj.select_set(True)
-            for child in obj.children:
-                select_with_children(child)
-
-        for obj in matching_objects:
-            select_with_children(obj)
-
-        # Count total selected (including children)
-        total_selected = len([obj for obj in scene.objects if obj.select_get()])
-
-        # Force UI redraw
-        for area in context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
-
-        self.report({'INFO'}, f"Selected {len(matching_objects)} object(s) and {total_selected - len(matching_objects)} children")
-        return {'FINISHED'}
-
-
-# ============================================================================
 # View Membership Operators (v1.2)
 # ============================================================================
 
@@ -891,6 +652,190 @@ class VG_OT_clear_view_membership(Operator):
 
 
 # ============================================================================
+# Compositional View Operations (v1 - Compositional)
+# ============================================================================
+
+class VG_OT_toggle_view_visibility(Operator):
+    """Toggle viewport visibility for all objects in this View"""
+    bl_idname = "virtual_groups.toggle_view_visibility"
+    bl_label = "Toggle View Visibility"
+    bl_description = "Toggle viewport visibility for all objects in this View (compositional)"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    view_index: IntProperty(
+        name="View Index",
+        description="Index of view to toggle visibility",
+        default=-1
+    )
+
+    @classmethod
+    def poll(cls, context):
+        # Only enabled if there's at least one view
+        scene = context.scene
+        return len(scene.vg_views) > 0
+
+    def execute(self, context):
+        scene = context.scene
+
+        # Use view_index if provided, otherwise use active index
+        if self.view_index >= 0:
+            index = self.view_index
+        else:
+            index = scene.vg_active_view_index
+
+        if index < 0 or index >= len(scene.vg_views):
+            self.report({'ERROR'}, "No View selected")
+            return {'CANCELLED'}
+
+        view = scene.vg_views[index]
+
+        # Get objects in this View
+        objects = utils.get_objects_in_view(view, scene)
+
+        if not objects:
+            self.report({'WARNING'}, "View has no objects")
+            return {'CANCELLED'}
+
+        # Check current state - are all objects visible?
+        all_visible = all(not obj.hide_viewport for obj in objects)
+
+        # Toggle: if all visible, hide all; otherwise show all
+        for obj in objects:
+            obj.hide_viewport = all_visible
+
+        # Force UI redraw
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+
+        action = "Hid" if all_visible else "Showed"
+        self.report({'INFO'}, f"{action} {len(objects)} object(s) in View '{view.name}'")
+        return {'FINISHED'}
+
+
+class VG_OT_toggle_view_selection(Operator):
+    """Toggle selection for all objects in this View (recursive)"""
+    bl_idname = "virtual_groups.toggle_view_selection"
+    bl_label = "Toggle View Selection"
+    bl_description = "Toggle selection for all objects in this View, including children (compositional)"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    view_index: IntProperty(
+        name="View Index",
+        description="Index of view to toggle selection",
+        default=-1
+    )
+
+    @classmethod
+    def poll(cls, context):
+        # Only enabled if there's at least one view
+        scene = context.scene
+        return len(scene.vg_views) > 0
+
+    def execute(self, context):
+        scene = context.scene
+
+        # Use view_index if provided, otherwise use active index
+        if self.view_index >= 0:
+            index = self.view_index
+        else:
+            index = scene.vg_active_view_index
+
+        if index < 0 or index >= len(scene.vg_views):
+            self.report({'ERROR'}, "No View selected")
+            return {'CANCELLED'}
+
+        view = scene.vg_views[index]
+
+        # Get objects in this View
+        objects = utils.get_objects_in_view(view, scene)
+
+        if not objects:
+            self.report({'WARNING'}, "View has no objects")
+            return {'CANCELLED'}
+
+        # Get all objects including children (recursive)
+        all_objects = []
+        for obj in objects:
+            all_objects.append(obj)
+            all_objects.extend(obj.children_recursive)
+
+        # Check current state - are all objects selected?
+        all_selected = all(obj.select_get() for obj in all_objects)
+
+        # Toggle (compositional - add or remove from selection)
+        for obj in all_objects:
+            obj.select_set(not all_selected)
+
+        # Force UI redraw
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+
+        action = "Deselected" if all_selected else "Selected"
+        self.report({'INFO'}, f"{action} {len(all_objects)} object(s) from View '{view.name}'")
+        return {'FINISHED'}
+
+
+class VG_OT_toggle_view_render_visibility(Operator):
+    """Toggle render visibility for all objects in this View"""
+    bl_idname = "virtual_groups.toggle_view_render_visibility"
+    bl_label = "Toggle View Render Visibility"
+    bl_description = "Toggle render visibility for all objects in this View (compositional)"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    view_index: IntProperty(
+        name="View Index",
+        description="Index of view to toggle render visibility",
+        default=-1
+    )
+
+    @classmethod
+    def poll(cls, context):
+        # Only enabled if there's at least one view
+        scene = context.scene
+        return len(scene.vg_views) > 0
+
+    def execute(self, context):
+        scene = context.scene
+
+        # Use view_index if provided, otherwise use active index
+        if self.view_index >= 0:
+            index = self.view_index
+        else:
+            index = scene.vg_active_view_index
+
+        if index < 0 or index >= len(scene.vg_views):
+            self.report({'ERROR'}, "No View selected")
+            return {'CANCELLED'}
+
+        view = scene.vg_views[index]
+
+        # Get objects in this View
+        objects = utils.get_objects_in_view(view, scene)
+
+        if not objects:
+            self.report({'WARNING'}, "View has no objects")
+            return {'CANCELLED'}
+
+        # Check current state - are all objects render-visible?
+        all_render_visible = all(not obj.hide_render for obj in objects)
+
+        # Toggle: if all render-visible, hide from render; otherwise show in render
+        for obj in objects:
+            obj.hide_render = all_render_visible
+
+        # Force UI redraw
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+
+        action = "Hid from render" if all_render_visible else "Enabled for render"
+        self.report({'INFO'}, f"{action} {len(objects)} object(s) in View '{view.name}'")
+        return {'FINISHED'}
+
+
+# ============================================================================
 # Registration
 # ============================================================================
 
@@ -910,16 +855,14 @@ classes = (
     VG_OT_add_view,
     VG_OT_delete_view,
     VG_OT_apply_query,
-    # View Operations
-    VG_OT_view_show,
-    VG_OT_view_hide,
-    VG_OT_view_toggle,
-    VG_OT_view_select,
-    VG_OT_view_select_recursive,
     # View Membership (v1.2)
     VG_OT_add_to_view,
     VG_OT_remove_from_view,
     VG_OT_clear_view_membership,
+    # Compositional View Operations (v1 - Compositional)
+    VG_OT_toggle_view_visibility,
+    VG_OT_toggle_view_selection,
+    VG_OT_toggle_view_render_visibility,
 )
 
 

@@ -196,5 +196,58 @@ class TestMembershipOperations(unittest.TestCase):
         self.assertEqual(tags.count(membership_tag), 1)
 
 
+class TestViewTagFiltering(unittest.TestCase):
+    """Test filtering of view-* tags from UI display."""
+
+    def setUp(self):
+        """Set up test objects with mixed regular and view tags."""
+        self.obj1 = MockObject("TestObject1")
+        self.obj2 = MockObject("TestObject2")
+
+        # Mix regular tags and view tags
+        utils.set_tags_on_object(self.obj1, ["candle", "view-guid-123", "desk"])
+        utils.set_tags_on_object(self.obj2, ["props", "view-guid-456", "hero"])
+
+        self.scene = MockScene([self.obj1, self.obj2])
+
+    def test_filter_view_tags_from_list(self):
+        """Test filtering view-* tags from a tag list."""
+        all_tags = utils.get_all_scene_tags(self.scene)
+
+        # Verify view tags are in the full list
+        self.assertIn("view-guid-123", all_tags)
+        self.assertIn("view-guid-456", all_tags)
+
+        # Filter out view tags
+        display_tags = [tag for tag in all_tags if not tag.startswith('view-')]
+
+        # Verify view tags are filtered out
+        self.assertNotIn("view-guid-123", display_tags)
+        self.assertNotIn("view-guid-456", display_tags)
+
+        # Verify regular tags remain
+        self.assertIn("candle", display_tags)
+        self.assertIn("desk", display_tags)
+        self.assertIn("props", display_tags)
+        self.assertIn("hero", display_tags)
+
+    def test_view_tag_pattern_matching(self):
+        """Test that only tags starting with 'view-' are filtered."""
+        tags = ["candle", "view-123", "view-abc-def", "viewer", "preview", "review"]
+
+        # Filter using same pattern as UI
+        filtered = [tag for tag in tags if not tag.startswith('view-')]
+
+        # Should filter out view-* tags
+        self.assertNotIn("view-123", filtered)
+        self.assertNotIn("view-abc-def", filtered)
+
+        # Should keep tags that contain 'view' but don't start with 'view-'
+        self.assertIn("viewer", filtered)
+        self.assertIn("preview", filtered)
+        self.assertIn("review", filtered)
+        self.assertIn("candle", filtered)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -67,12 +67,6 @@ class VG_SceneProperties(PropertyGroup):
     )
     
     # Placeholder properties for v1
-    view_search: StringProperty(
-        name="View Search",
-        description="Filter views by name",
-        default=""
-    )
-    
     tag_search: StringProperty(
         name="Tag Search",
         description="Filter tags by name",

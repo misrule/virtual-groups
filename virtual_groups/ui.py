@@ -51,13 +51,8 @@ class VG_PT_views_subpanel(Panel):
         props = scene.vg_props
         
         # Add View button
-        layout.operator("virtual_groups.add_view", text="Add View", icon='ADD')
-        
-        # Search bar (placeholder for v1)
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "view_search", text="", icon='VIEWZOOM', placeholder="Search views...")
-        
+        layout.operator("virtual_groups.add_view", text="New", icon='ADD')
+
         # Separator
         layout.separator()
         
@@ -87,24 +82,6 @@ class VG_PT_views_subpanel(Panel):
             row.operator("virtual_groups.add_to_view", text="Add", icon='ADD')
             row.operator("virtual_groups.remove_from_view", text="Remove", icon='REMOVE')
             row.operator("virtual_groups.clear_view_membership", text="Clear All", icon='X')
-
-            box.separator()
-
-            # Action buttons
-            col = box.column(align=True)
-
-            # Row 1: Show, Hide
-            row = col.row(align=True)
-            row.operator("virtual_groups.view_show", text="Show", icon='HIDE_OFF')
-            row.operator("virtual_groups.view_hide", text="Hide", icon='HIDE_ON')
-
-            # Row 2: Toggle, Select
-            row = col.row(align=True)
-            row.operator("virtual_groups.view_toggle", text="Toggle", icon='ARROW_LEFTRIGHT')
-            row.operator("virtual_groups.view_select", text="Select", icon='RESTRICT_SELECT_OFF')
-
-            # Row 3: Select Recursive (full width)
-            col.operator("virtual_groups.view_select_recursive", text="Select Recursive", icon='OUTLINER')
 
             box.separator()
 
@@ -174,17 +151,18 @@ class VG_PT_tags_subpanel(Panel):
         # Scene Tags section (Tag Palette)
         layout.label(text="Scene Tags", icon='BOOKMARKS')
 
-        # Get all scene tags
+        # Get all scene tags and filter out view-* tags (internal membership tags)
         all_tags = utils.get_all_scene_tags(scene)
+        display_tags = [tag for tag in all_tags if not tag.startswith('view-')]
 
-        if all_tags:
+        if display_tags:
             # Get selected tags for highlighting
             selected_tags_str = props.selected_tags
             selected_tags = selected_tags_str.split(',') if selected_tags_str else []
 
             # Grid layout for tag pills (toggle buttons)
             flow = layout.grid_flow(row_major=True, columns=3, align=True)
-            for tag in all_tags:
+            for tag in display_tags:
                 # Create toggle button that appears pressed when selected
                 is_selected = tag in selected_tags
                 op = flow.operator(
@@ -263,12 +241,15 @@ class VG_PT_tags_subpanel(Panel):
             for obj in context.selected_objects:
                 obj_tags = utils.get_tags_on_object(obj)
                 selected_obj_tags.update(obj_tags)
-            
-            if selected_obj_tags:
+
+            # Filter out view-* tags (internal membership tags)
+            display_selected_tags = {tag for tag in selected_obj_tags if not tag.startswith('view-')}
+
+            if display_selected_tags:
                 # Show tags as removable pills
                 # Using a column of rows instead of grid_flow for better compatibility
                 col = box.column(align=True)
-                for tag in sorted(selected_obj_tags):
+                for tag in sorted(display_selected_tags):
                     row = col.row(align=True)
                     row.label(text=tag, icon='BOOKMARKS')
                     op = row.operator(
@@ -303,36 +284,51 @@ class VG_UL_views(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         """Draw a single View item in the list."""
         view = item
-        
+
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             # Create a row for the entire item
             row = layout.row(align=True)
-            
-            # Eye icon (toggle visibility)
-            # Using emboss=False makes it look like an icon button
-            op_eye = row.operator(
-                "virtual_groups.view_toggle",
+
+            # Get objects in this View to determine icon states
+            view_objects = utils.get_objects_in_view(view, context.scene)
+
+            # Visibility toggle (dynamic icon based on state)
+            all_visible = all(not obj.hide_viewport for obj in view_objects) if view_objects else True
+            vis_icon = 'RESTRICT_VIEW_OFF' if all_visible else 'HIDE_ON'
+            op_vis = row.operator(
+                "virtual_groups.toggle_view_visibility",
                 text="",
-                icon='HIDE_OFF',
+                icon=vis_icon,
                 emboss=False
             )
-            op_eye.view_index = index
-            
-            # Cursor icon (select objects)
-            op_cursor = row.operator(
-                "virtual_groups.view_select",
+            op_vis.view_index = index
+
+            # Selection toggle
+            op_sel = row.operator(
+                "virtual_groups.toggle_view_selection",
                 text="",
                 icon='RESTRICT_SELECT_OFF',
                 emboss=False
             )
-            op_cursor.view_index = index
-            
+            op_sel.view_index = index
+
+            # Render visibility toggle (dynamic icon based on state)
+            all_render_visible = all(not obj.hide_render for obj in view_objects) if view_objects else True
+            render_icon = 'RESTRICT_RENDER_OFF' if all_render_visible else 'RESTRICT_RENDER_ON'
+            op_render = row.operator(
+                "virtual_groups.toggle_view_render_visibility",
+                text="",
+                icon=render_icon,
+                emboss=False
+            )
+            op_render.view_index = index
+
             # View name (clickable to select)
-            row.prop(view, "name", text="", emboss=False, icon='BOOKMARKS')
-            
+            row.prop(view, "name", text="", emboss=False)
+
             # Object count
             row.label(text=f"({view.cached_count})")
-            
+
             # Delete button
             op_delete = row.operator(
                 "virtual_groups.delete_view",
@@ -341,7 +337,7 @@ class VG_UL_views(UIList):
                 emboss=False
             )
             op_delete.view_index = index
-        
+
         elif self.layout_type == 'GRID':
             layout.alignment = 'CENTER'
             layout.label(text="", icon='BOOKMARKS')
