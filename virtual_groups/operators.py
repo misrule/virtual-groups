@@ -473,7 +473,22 @@ class VG_OT_delete_view(Operator):
             self.report({'ERROR'}, "No View selected")
             return {'CANCELLED'}
 
-        view_name = scene.vg_views[index].name
+        view = scene.vg_views[index]
+        view_name = view.name
+
+        # Clean up membership tags from all objects before deleting
+        if view.guid:
+            membership_tag = f"view-{view.guid}"
+            removed_count = 0
+            for obj in scene.objects:
+                if membership_tag in utils.get_tags_on_object(obj):
+                    utils.remove_tag_from_object(obj, membership_tag)
+                    removed_count += 1
+
+            if removed_count > 0:
+                print(f"[Virtual Groups] Cleaned up membership tag from {removed_count} object(s)")
+
+        # Remove the view
         scene.vg_views.remove(index)
 
         # Adjust active index
