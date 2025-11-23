@@ -196,13 +196,92 @@ All 71 tests should pass ✅
 
 ### Building from Source
 
+The project includes an automated build script (`build.sh`) that handles building, versioning, testing, and releasing.
+
+#### Quick Build
+
 ```bash
-# Build extension package
+# Build the current version
+./build.sh build
+
+# Output: dist/virtual_groups-0.1.0.zip
+```
+
+#### Build Script Commands
+
+```bash
+./build.sh clean              # Clean build artifacts and Python cache
+./build.sh validate           # Validate extension manifest
+./build.sh build              # Build extension package
+./build.sh install            # Install to Blender for testing (auto-builds if needed)
+./build.sh test               # Run test suite (71 tests)
+./build.sh version <type>     # Bump version (major|minor|patch)
+./build.sh release <type>     # Full release workflow
+./build.sh help               # Show help message
+```
+
+#### Version Management
+
+The build script automatically updates version numbers in both the manifest and `__init__.py`:
+
+```bash
+# Bump patch version (0.1.0 → 0.1.1)
+./build.sh version patch
+
+# Bump minor version (0.1.0 → 0.2.0)
+./build.sh version minor
+
+# Bump major version (0.1.0 → 1.0.0)
+./build.sh version major
+```
+
+#### Release Workflow
+
+The `release` command automates the entire release process:
+
+```bash
+# Example: Release version 0.2.0
+./build.sh release minor
+
+# This will:
+# 1. Run all tests
+# 2. Bump version to 0.2.0
+# 3. Clean and rebuild package
+# 4. Create git commit and tag
+# 5. Display commands for pushing to GitHub
+```
+
+After running the release command, push to GitHub and create a release:
+
+```bash
+# Push changes and tags
+git push origin main
+git push origin v0.2.0
+
+# Create GitHub release with package
+gh release create v0.2.0 \
+  --title "Virtual Groups v0.2.0" \
+  --generate-notes \
+  ./dist/virtual_groups-0.2.0.zip
+```
+
+#### Configuration
+
+The build script is pre-configured for macOS. To modify settings, edit these variables in `build.sh`:
+
+```bash
+BLENDER_PATH="/Applications/Blender.app/Contents/MacOS/blender"
+SOURCE_DIR="./virtual_groups"
+OUTPUT_DIR="./dist"
+```
+
+#### Manual Build (without script)
+
+```bash
+# If you prefer manual builds
 blender --command extension build \
   --output-dir ./dist \
   --source-dir ./virtual_groups
-
-# Output: dist/virtual_groups-0.1.0.zip
 ```
 
 ### Code Style
