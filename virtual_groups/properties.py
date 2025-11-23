@@ -55,6 +55,19 @@ class VG_ViewProperty(PropertyGroup):
         default=False
     )
 
+    # Cached icon states (updated by operators, displayed in UIList)
+    icon_all_visible: BoolProperty(
+        name="All Visible",
+        description="Cached state: all objects in view are visible in viewport",
+        default=True
+    )
+
+    icon_all_render_visible: BoolProperty(
+        name="All Render Visible",
+        description="Cached state: all objects in view are visible in render",
+        default=True
+    )
+
 
 class VG_SceneProperties(PropertyGroup):
     """Scene-level properties for Virtual Groups."""

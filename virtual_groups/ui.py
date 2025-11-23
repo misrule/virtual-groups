@@ -283,18 +283,19 @@ class VG_UL_views(UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         """Draw a single View item in the list."""
-        view = item
+        # Access view directly from scene collection using index for reliability
+        scene = context.scene
+        if index < 0 or index >= len(scene.vg_views):
+            return
+
+        view = scene.vg_views[index]
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             # Create a row for the entire item
             row = layout.row(align=True)
 
-            # Get objects in this View to determine icon states
-            view_objects = utils.get_objects_in_view(view, context.scene)
-
-            # Visibility toggle (dynamic icon based on state)
-            all_visible = all(not obj.hide_viewport for obj in view_objects) if view_objects else True
-            vis_icon = 'RESTRICT_VIEW_OFF' if all_visible else 'HIDE_ON'
+            # Visibility toggle (icon from cached state)
+            vis_icon = 'RESTRICT_VIEW_OFF' if view.icon_all_visible else 'HIDE_ON'
             op_vis = row.operator(
                 "virtual_groups.toggle_view_visibility",
                 text="",
@@ -312,9 +313,8 @@ class VG_UL_views(UIList):
             )
             op_sel.view_index = index
 
-            # Render visibility toggle (dynamic icon based on state)
-            all_render_visible = all(not obj.hide_render for obj in view_objects) if view_objects else True
-            render_icon = 'RESTRICT_RENDER_OFF' if all_render_visible else 'RESTRICT_RENDER_ON'
+            # Render visibility toggle (icon from cached state)
+            render_icon = 'RESTRICT_RENDER_OFF' if view.icon_all_render_visible else 'RESTRICT_RENDER_ON'
             op_render = row.operator(
                 "virtual_groups.toggle_view_render_visibility",
                 text="",

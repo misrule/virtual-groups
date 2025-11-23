@@ -19,6 +19,23 @@ from . import query_parser
 
 
 # ============================================================================
+# Helper Functions
+# ============================================================================
+
+def update_view_icon_states(view, scene):
+    """Update cached icon states for a view based on current object visibility."""
+    objects = utils.get_objects_in_view(view, scene)
+
+    if objects:
+        view.icon_all_visible = all(not obj.hide_viewport for obj in objects)
+        view.icon_all_render_visible = all(not obj.hide_render for obj in objects)
+    else:
+        # Empty view defaults to "all visible"
+        view.icon_all_visible = True
+        view.icon_all_render_visible = True
+
+
+# ============================================================================
 # Tag Management Operators (Phase 1)
 # ============================================================================
 
@@ -410,6 +427,8 @@ class VG_OT_add_view(Operator):
         new_view.guid = str(uuid.uuid4())
         new_view.query = ""
         new_view.cached_count = 0
+        new_view.icon_all_visible = True  # Default to all visible
+        new_view.icon_all_render_visible = True  # Default to all render visible
 
         # Set as active
         scene.vg_active_view_index = len(scene.vg_views) - 1
@@ -505,6 +524,9 @@ class VG_OT_apply_query(Operator):
         # Update cached count
         view.cached_count = len(matching_objects)
 
+        # Update icon states
+        update_view_icon_states(view, scene)
+
         # Force UI redraw
         for area in context.screen.areas:
             if area.type == 'VIEW_3D':
@@ -549,9 +571,10 @@ class VG_OT_add_to_view(Operator):
             utils.add_tag_to_object(obj, membership_tag)
             count += 1
 
-        # Update cached count
+        # Update cached count and icon states
         matching_objects = utils.get_objects_in_view(view, scene)
         view.cached_count = len(matching_objects)
+        update_view_icon_states(view, scene)
 
         # Force UI redraw
         for area in context.screen.areas:
@@ -593,9 +616,10 @@ class VG_OT_remove_from_view(Operator):
             utils.remove_tag_from_object(obj, membership_tag)
             count += 1
 
-        # Update cached count
+        # Update cached count and icon states
         matching_objects = utils.get_objects_in_view(view, scene)
         view.cached_count = len(matching_objects)
+        update_view_icon_states(view, scene)
 
         # Force UI redraw
         for area in context.screen.areas:
@@ -638,9 +662,10 @@ class VG_OT_clear_view_membership(Operator):
                 utils.remove_tag_from_object(obj, membership_tag)
                 count += 1
 
-        # Update cached count
+        # Update cached count and icon states
         matching_objects = utils.get_objects_in_view(view, scene)
         view.cached_count = len(matching_objects)
+        update_view_icon_states(view, scene)
 
         # Force UI redraw
         for area in context.screen.areas:
@@ -702,6 +727,9 @@ class VG_OT_toggle_view_visibility(Operator):
         # Toggle: if all visible, hide all; otherwise show all
         for obj in objects:
             obj.hide_viewport = all_visible
+
+        # Update cached icon state for this view
+        view.icon_all_visible = not all_visible
 
         # Force UI redraw
         for area in context.screen.areas:
@@ -824,6 +852,9 @@ class VG_OT_toggle_view_render_visibility(Operator):
         # Toggle: if all render-visible, hide from render; otherwise show in render
         for obj in objects:
             obj.hide_render = all_render_visible
+
+        # Update cached icon state for this view
+        view.icon_all_render_visible = not all_render_visible
 
         # Force UI redraw
         for area in context.screen.areas:
