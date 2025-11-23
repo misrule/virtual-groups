@@ -7,13 +7,13 @@ using semantic tags and dynamic query-based virtual collections.
 
 bl_info = {
     "name": "Virtual Groups",
-    "author": "Your Name",
+    "author": "Sy Smythe",
     "version": (0, 1, 0),
-    "blender": (4, 5, 0),
+    "blender": (4, 2, 0),
     "location": "View3D > Sidebar > Virtual Groups",
-    "description": "Tag-based semantic grouping and dynamic virtual collections",
+    "description": "Tag-based object grouping and scene management",
     "warning": "",
-    "doc_url": "",
+    "doc_url": "https://github.com/misrule/virtual-groups",
     "category": "Object",
 }
 

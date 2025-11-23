@@ -1,0 +1,39 @@
+schema_version = "1.0.0"
+
+# Virtual Groups - Tag-based object grouping and scene management for Blender
+id = "virtual_groups"
+version = "0.1.0"
+name = "Virtual Groups"
+tagline = "Tag-based object grouping and scene management"
+maintainer = "Sy Smythe"
+type = "add-on"
+
+# Documentation and source
+website = "https://github.com/misrule/virtual-groups"
+
+# Blender compatibility
+blender_version_min = "4.2.0"
+
+# License
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+copyright = [
+  "2025 Sy Smythe",
+]
+
+# Tags for discoverability
+tags = ["3D View", "Object"]
+
+# Build configuration - exclude test files, docs, and development artifacts
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "/.git/",
+  "/.gitignore",
+  "/tests/",
+  "/docs/",
+  "*.zip",
+  "*.pyc",
+  ".DS_Store",
+]
