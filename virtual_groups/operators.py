@@ -11,7 +11,7 @@ Contains all operator classes (button actions):
 import bpy
 import uuid
 from bpy.types import Operator
-from bpy.props import StringProperty, IntProperty, BoolProperty
+from bpy.props import StringProperty, IntProperty
 
 # Import utilities (will be implemented in Phase 2+)
 from . import utils
@@ -46,7 +46,7 @@ class VG_OT_add_tag_to_selected(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     # Tag name as operator property (allows popup input)
-    tag_name: StringProperty(
+    tag_name = StringProperty(
         name="Tag Name",
         description="Name of the tag to add",
         default=""
@@ -57,7 +57,7 @@ class VG_OT_add_tag_to_selected(Operator):
         # Only enabled if objects are selected
         return len(context.selected_objects) > 0
 
-    def invoke(self, context, event):
+    def invoke(self, context, _event):
         # Always reset tag_name first (prevents persistence from last use)
         self.tag_name = ""
 
@@ -106,7 +106,7 @@ class VG_OT_remove_tag_from_selected(Operator):
     bl_label = "Remove Tag"
     bl_options = {'REGISTER', 'UNDO'}
 
-    tag_name: StringProperty(
+    tag_name = StringProperty(
         name="Tag Name",
         description="Name of tag to remove"
     )
@@ -146,7 +146,7 @@ class VG_OT_toggle_tag_selection(Operator):
     bl_label = "Toggle Tag Selection"
     bl_options = {'INTERNAL'}
 
-    tag_name: StringProperty(
+    tag_name = StringProperty(
         name="Tag Name",
         description="Tag to toggle selection"
     )
@@ -403,13 +403,13 @@ class VG_OT_add_view(Operator):
     bl_label = "Add View"
     bl_options = {'REGISTER', 'UNDO'}
 
-    view_name: StringProperty(
+    view_name = StringProperty(
         name="View Name",
         description="Name for the new View",
         default="New View"
     )
 
-    def invoke(self, context, event):
+    def invoke(self, context, _event):
         # Show popup dialog with text input
         return context.window_manager.invoke_props_dialog(self)
 
@@ -448,7 +448,7 @@ class VG_OT_delete_view(Operator):
     bl_label = "Delete View"
     bl_options = {'REGISTER', 'UNDO'}
 
-    view_index: IntProperty(
+    view_index = IntProperty(
         name="View Index",
         description="Index of view to delete (use -1 for active view)",
         default=-1
@@ -702,7 +702,7 @@ class VG_OT_toggle_view_visibility(Operator):
     bl_description = "Toggle viewport visibility for all objects in this View (compositional)"
     bl_options = {'REGISTER', 'UNDO'}
 
-    view_index: IntProperty(
+    view_index = IntProperty(
         name="View Index",
         description="Index of view to toggle visibility",
         default=-1
@@ -763,7 +763,7 @@ class VG_OT_toggle_view_selection(Operator):
     bl_description = "Toggle selection for all objects in this View, including children (compositional)"
     bl_options = {'REGISTER', 'UNDO'}
 
-    view_index: IntProperty(
+    view_index = IntProperty(
         name="View Index",
         description="Index of view to toggle selection",
         default=-1
@@ -827,7 +827,7 @@ class VG_OT_toggle_view_render_visibility(Operator):
     bl_description = "Toggle render visibility for all objects in this View (compositional)"
     bl_options = {'REGISTER', 'UNDO'}
 
-    view_index: IntProperty(
+    view_index = IntProperty(
         name="View Index",
         description="Index of view to toggle render visibility",
         default=-1
